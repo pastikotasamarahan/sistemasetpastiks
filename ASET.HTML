@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ms" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Inventori Aset PASTI Kota Samarahan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col antialiased">
+
+    <!-- Header / Navbar -->
+    <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo & Tajuk -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-emerald-800 rounded-xl flex items-center justify-center shadow-inner border border-emerald-600">
+                        <i class="fa-solid fa-boxes-stacked text-emerald-200 text-xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold leading-tight tracking-wide">e-Inventori PASTI</h1>
+                        <p class="text-xs text-emerald-200">Kawasan Kota Samarahan</p>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Header -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="openDriveModal()" class="bg-emerald-800 hover:bg-emerald-900 text-emerald-100 hover:text-white px-3 py-2 rounded-lg text-xs font-medium transition flex items-center gap-1.5 border border-emerald-600">
+                        <i class="fa-brands fa-google-drive text-amber-300"></i>
+                        <span class="hidden sm:inline">Google Drive</span>
+                    </button>
+                    <button onclick="exportToCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm border border-emerald-500">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span class="hidden sm:inline">Eksport CSV</span>
+                    </button>
+                    <button onclick="openBackupModal()" class="bg-amber-600 hover:bg-amber-500 text-white px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-database"></i>
+                        <span class="hidden sm:inline">Sandaran</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 no-print">
+
+        <!-- Stat Cards / Ringkasan Dashboard -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Jumlah Aset</p>
+                    <p id="statTotal" class="text-lg font-bold text-slate-800">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-green-100 text-green-700 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Keadaan Baik</p>
+                    <p id="statBaik" class="text-lg font-bold text-green-700">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-red-100 text-red-700 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Rosak</p>
+                    <p id="statRosak" class="text-lg font-bold text-red-700">0</p>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-wrench"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Selenggara</p>
+                    <p id="statSelenggara" class="text-lg font-bold text-amber-700">0</p>
+                </div>
+            </div>
+
+            <div class="col-span-2 lg:col-span-1 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                </div>
+                <div>
+                    <p class="text-xs text-slate-500 font-medium">Jumlah Premis</p>
+                    <p id="statPremise" class="text-lg font-bold text-indigo-700">0</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Grid (2 Columns on Large Screens) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: Premis & Form (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+
+                <!-- Card 1: Pengurusan Premis PASTI -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-building text-emerald-600"></i>
+                            1. Pengurusan Premis PASTI
+                        </h2>
+                        <span class="text-xs text-slate-400">Kota Samarahan</span>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <input type="text" id="newPremiseInput" placeholder="Cth: PASTI Al-Kautsar, PASTI 1" 
+                            class="flex-1 px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                        <button onclick="addPremise()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-semibold transition flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> Tambah
+                        </button>
+                    </div>
+
+                    <!-- Badge List Premis -->
+                    <div>
+                        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Premis Berdaftar</p>
+                        <div id="premiseBadgeList" class="flex flex-wrap gap-1.5 min-h-[36px]">
+                            <!-- Generated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Borang Daftar / Edit Aset -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-file-circle-plus text-emerald-600"></i>
+                            <span id="formTitle">2. Pendaftaran Aset Perabot</span>
+                        </h2>
+                        <span id="formModeBadge" class="text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">Baru</span>
+                    </div>
+
+                    <form id="assetForm" onsubmit="handleFormSubmit(event)" class="space-y-3.5">
+                        <input type="hidden" id="editAssetId">
+
+                        <!-- Pilih Premis -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Premis PASTI *</label>
+                            <select id="assetPremise" required class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                                <option value="">-- Pilih Premis PASTI --</option>
+                            </select>
+                        </div>
+
+                        <!-- Kod Awalan & Nama Item -->
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Kod Awalan *</label>
+                                <input type="text" id="assetPrefixCode" placeholder="Cth: KSH/ELK" required uppercase
+                                    class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 uppercase outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Perabot / Item *</label>
+                                <input type="text" id="assetName" placeholder="Cth: Meja Murid" required
+                                    class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Kategori & Status Keadaan -->
+                        <div class="grid grid-cols-2 gap-2 sm:gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori *</label>
+                                <select id="assetCategory" required class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="Elektrik">Elektrik</option>
+                                    <option value="Pembelajaran">Pembelajaran</option>
+                                    <option value="Perabot Pejabat">Perabot Pejabat</option>
+                                    <option value="Perabot Kelas">Perabot Kelas</option>
+                                    <option value="Kelengkapan Dapur">Kelengkapan Dapur</option>
+                                    <option value="Lain-lain">Lain-lain</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Status Keadaan *</label>
+                                <select id="assetStatus" required class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="Baik">Baik</option>
+                                    <option value="Rosak">Rosak</option>
+                                    <option value="Perlu Selenggara">Perlu Selenggara</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Tangkap / Muat Naik Gambar -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Gambar Perabot (Kamera / Galeri)</label>
+                            <input type="file" id="assetImageInput" accept="image/*" capture="environment" 
+                                class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                            
+                            <div id="imagePreviewContainer" class="mt-2 hidden flex items-center gap-3 p-2 bg-slate-50 rounded-lg border">
+                                <img id="imagePreview" src="" class="w-16 h-16 object-cover rounded-lg border shadow-sm">
+                                <div class="flex-1">
+                                    <p class="text-xs font-medium text-slate-700">Gambar Dipilih</p>
+                                    <p class="text-[10px] text-slate-400">Dimampatkan secara automatik</p>
+                                </div>
+                                <button type="button" onclick="clearImageSelection()" class="text-red-500 hover:text-red-700 text-xs px-2 py-1">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Catatan / Keterangan -->
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan / Keterangan Tambahan</label>
+                            <textarea id="assetNotes" rows="2" placeholder="Cth: Sumbangan PIBG 2024, Jenama Khind, Nombor Siri..." 
+                                class="w-full px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none resize-none"></textarea>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex gap-2 pt-2">
+                            <button type="submit" id="submitBtn" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition shadow-sm flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-floppy-disk"></i> Simpan Aset
+                            </button>
+                            <button type="button" id="cancelEditBtn" onclick="resetForm()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition">
+                                Batal
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Filters & Asset List (7 cols) -->
+            <div class="lg:col-span-7 space-y-4">
+
+                <!-- Bilah Carian, Tapis & Susun -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <!-- Carian Text -->
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                            <input type="text" id="searchInput" oninput="renderAssets()" placeholder="Cari kod aset, nama item, atau catatan..." 
+                                class="w-full pl-8 pr-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                        </div>
+                        <!-- Cetak Label Button -->
+                        <button onclick="printLabels()" class="bg-slate-800 hover:bg-slate-900 text-white px-3 py-2 rounded-lg text-xs font-medium transition flex items-center justify-center gap-1.5 whitespace-nowrap">
+                            <i class="fa-solid fa-print"></i> Cetak Tag Label
+                        </button>
+                    </div>
+
+                    <!-- Filter Dropdowns -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        <select id="filterPremise" onchange="renderAssets()" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none">
+                            <option value="">Semua Premis</option>
+                        </select>
+                        <select id="filterStatus" onchange="renderAssets()" class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none">
+                            <option value="">Semua Status</option>
+                            <option value="Baik">Baik</option>
+                            <option value="Rosak">Rosak</option>
+                            <option value="Perlu Selenggara">Perlu Selenggara</option>
+                        </select>
+                        <select id="filterCategory" onchange="renderAssets()" class="w-full col-span-2 sm:col-span-1 px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg outline-none">
+                            <option value="">Semua Kategori</option>
+                            <option value="Elektrik">Elektrik</option>
+                            <option value="Pembelajaran">Pembelajaran</option>
+                            <option value="Perabot Pejabat">Perabot Pejabat</option>
+                            <option value="Perabot Kelas">Perabot Kelas</option>
+                            <option value="Kelengkapan Dapur">Kelengkapan Dapur</option>
+                            <option value="Lain-lain">Lain-lain</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Kad Senarai Inventori Aset -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+                    <div class="flex justify-between items-center mb-4 border-b pb-3">
+                        <div>
+                            <h2 class="text-sm font-bold text-slate-800">Senarai Inventori Perabot</h2>
+                            <p class="text-[11px] text-slate-400">Rekod dikemaskini mengikut turutan pendaftaran</p>
+                        </div>
+                        <span id="assetCountBadge" class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-3 py-1 rounded-full">0 Item</span>
+                    </div>
+
+                    <!-- Container Senarai Aset -->
+                    <div id="assetList" class="space-y-3">
+                        <!-- Generated via JS -->
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- ================= MODALS & OVERLAYS ================= -->
+
+    <!-- Modal 1: Google Drive Sync Info -->
+    <div id="driveModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-brands fa-google-drive text-amber-500 text-lg"></i>
+                    Penyimpanan Google Drive
+                </h3>
+                <button onclick="closeDriveModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="text-xs text-slate-600 space-y-2">
+                <p>Data inventori anda disimpan secara automatik dalam peranti ini. Untuk menyimpan salinan dalam **Google Drive**: </p>
+                <ol class="list-decimal list-inside space-y-1 bg-slate-50 p-3 rounded-xl border text-slate-700">
+                    <li>Klik butang **Eksport CSV** atau **Muat Turun Backup JSON**.</li>
+                    <li>Buka aplikasi **Google Drive** akaun PASTI anda.</li>
+                    <li>Pilih folder simpanan lokasi PASTI Samarahan.</li>
+                    <li>Muat naik (*Upload*) fail CSV / JSON yang telah dimuat turun tadi.</li>
+                </ol>
+            </div>
+            <div class="pt-2 flex gap-2">
+                <button onclick="exportToCSV(); closeDriveModal();" class="flex-1 bg-emerald-600 text-white py-2 rounded-lg text-xs font-semibold">
+                    <i class="fa-solid fa-download"></i> Muat Turun CSV
+                </button>
+                <button onclick="closeDriveModal()" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-semibold">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Backup & Restore JSON -->
+    <div id="backupModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl">
+            <div class="flex justify-between items-center border-b pb-3">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-database text-amber-600"></i>
+                    Sandaran & Pemulihan Data
+                </h3>
+                <button onclick="closeBackupModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <h4 class="text-xs font-bold text-amber-900 mb-1">Eksport Sandaran (JSON)</h4>
+                    <p class="text-[11px] text-amber-800 mb-2">Simpan semua premis, aset, dan rekod gambar ke fail JSON.</p>
+                    <button onclick="exportBackupJSON()" class="w-full bg-amber-600 hover:bg-amber-700 text-white py-1.5 rounded-lg text-xs font-semibold">
+                        <i class="fa-solid fa-file-export"></i> Muat Turun Fail Sandaran JSON
+                    </button>
+                </div>
+
+                <div class="p-3 bg-slate-50 border rounded-xl">
+                    <h4 class="text-xs font-bold text-slate-800 mb-1">Pulihkan Data (Import JSON)</h4>
+                    <p class="text-[11px] text-slate-500 mb-2">Pilih fail `.json` sandaran untuk memulihkan rekod.</p>
+                    <input type="file" id="importJsonInput" accept=".json" class="text-xs text-slate-500 w-full mb-2">
+                    <button onclick="importBackupJSON()" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-1.5 rounded-lg text-xs font-semibold">
+                        <i class="fa-solid fa-file-import"></i> Pulihkan Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: View QR Code / Label Asset -->
+    <div id="qrModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-6 text-center space-y-4 shadow-xl">
+            <h3 id="qrModalTitle" class="font-bold text-slate-800 text-sm">Tag Label Aset</h3>
+            <div class="p-4 bg-white border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center">
+                <div id="qrcode" class="mb-2"></div>
+                <p id="qrModalCode" class="font-mono font-bold text-emerald-700 text-xs"></p>
+                <p id="qrModalName" class="text-xs text-slate-700 font-medium"></p>
+                <p id="qrModalPremise" class="text-[10px] text-slate-500"></p>
+            </div>
+            <button onclick="closeQRModal()" class="w-full bg-slate-800 text-white py-2 rounded-lg text-xs font-semibold">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal 4: High Res Image Viewer -->
+    <div id="imageModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4" onclick="closeImageModal()">
+        <div class="relative max-w-2xl max-h-[85vh] p-2">
+            <img id="imageModalTarget" src="" class="max-w-full max-h-[80vh] rounded-xl object-contain shadow-2xl mx-auto">
+            <p id="imageModalCaption" class="text-center text-white text-xs mt-2 font-medium"></p>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Dialog Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 space-y-3 shadow-xl text-center">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto text-lg">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h4 id="confirmTitle" class="font-bold text-slate-800 text-sm">Pengesahan Action</h4>
+            <p id="confirmMessage" class="text-xs text-slate-600">Adakah anda pasti?</p>
+            <div class="flex gap-2 pt-2">
+                <button id="confirmYesBtn" class="flex-1 bg-red-600 text-white py-2 rounded-lg text-xs font-semibold">Ya, Teruskan</button>
+                <button onclick="closeConfirmModal()" class="flex-1 bg-slate-200 text-slate-700 py-2 rounded-lg text-xs font-semibold">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="fixed bottom-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- PRINT ONLY VIEW (Hidden in normal browser view) -->
+    <div id="printArea" class="hidden print-only p-6 bg-white min-h-screen">
+        <div class="text-center mb-6 border-b pb-4">
+            <h1 class="text-xl font-bold">PASTI KAWASAN KOTA SAMARAHAN</h1>
+            <p class="text-sm">LEMBARAN TAG LABEL INVENTORI ASET PERABOT</p>
+        </div>
+        <div id="printTagGrid" class="grid grid-cols-3 gap-4">
+            <!-- Labels generated via JS -->
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIC ================= -->
+    <script>
+        /* STORAGE KEYS */
+        const STORAGE_PREMISES = 'pasti_samarahan_premises_v2';
+        const STORAGE_ASSETS = 'pasti_samarahan_assets_v2';
+
+        /* APPLICATION STATE */
+        let premises = JSON.parse(localStorage.getItem(STORAGE_PREMISES)) || ['PASTI 1', 'PASTI 2', 'PASTI 3'];
+        let assets = JSON.parse(localStorage.getItem(STORAGE_ASSETS)) || [];
+        let currentImageData = '';
+        let pendingConfirmCallback = null;
+
+        /* INITIALIZATION */
+        window.onload = function() {
+            renderPremises();
+            renderAssets();
+            updateStats();
+
+            // Image file upload & compression listener
+            document.getElementById('assetImageInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    compressAndProcessImage(file, function(base64Str) {
+                        currentImageData = base64Str;
+                        document.getElementById('imagePreview').src = currentImageData;
+                        document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                    });
+                }
+            });
+        };
+
+        /* IMAGE COMPRESSION (Reduces LocalStorage size) */
+        function compressAndProcessImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 500;
+                    const scaleSize = MAX_WIDTH / img.width;
+                    canvas.width = (img.width > MAX_WIDTH) ? MAX_WIDTH : img.width;
+                    canvas.height = (img.width > MAX_WIDTH) ? (img.height * scaleSize) : img.height;
+
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const resizedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(resizedBase64);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearImageSelection() {
+            currentImageData = '';
+            document.getElementById('assetImageInput').value = '';
+            document.getElementById('imagePreviewContainer').classList.add('hidden');
+        }
+
+        /* --- PREMISE MANAGEMENT --- */
+        function renderPremises() {
+            localStorage.setItem(STORAGE_PREMISES, JSON.stringify(premises));
+            const badgeContainer = document.getElementById('premiseBadgeList');
+            const selectAsset = document.getElementById('assetPremise');
+            const selectFilter = document.getElementById('filterPremise');
+
+            const currentAssetPremiseVal = selectAsset.value;
+            const currentFilterPremiseVal = selectFilter.value;
+
+            badgeContainer.innerHTML = '';
+            selectAsset.innerHTML = '<option value="">-- Pilih Premis PASTI --</option>';
+            selectFilter.innerHTML = '<option value="">Semua Premis</option>';
+
+            premises.forEach((p, index) => {
+                const count = assets.filter(a => a.premise === p).length;
+                badgeContainer.innerHTML += `
+                    <span class="inline-flex items-center gap-1.5 text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200 transition">
+                        <span class="font-medium">${p}</span>
+                        <span class="text-[10px] bg-slate-300 text-slate-700 font-bold px-1.5 py-0.2 rounded-full">${count}</span>
+                        <i onclick="promptRemovePremise(${index})" class="fa-solid fa-xmark text-slate-400 hover:text-red-600 cursor-pointer ml-0.5"></i>
+                    </span>
+                `;
+                selectAsset.innerHTML += `<option value="${p}">${p}</option>`;
+                selectFilter.innerHTML += `<option value="${p}">${p}</option>`;
+            });
+
+            selectAsset.value = currentAssetPremiseVal;
+            selectFilter.value = currentFilterPremiseVal;
+            updateStats();
+        }
+
+        function addPremise() {
+            const input = document.getElementById('newPremiseInput');
+            const val = input.value.trim();
+            if (!val) {
+                showToast("Sila masukkan nama premis PASTI", "warning");
+                return;
+            }
+            if (premises.includes(val)) {
+                showToast("Premis ini telah sedia ada", "warning");
+                return;
+            }
+            premises.push(val);
+            input.value = '';
+            renderPremises();
+            showToast(`Premis "${val}" berjaya ditambah`, "success");
+        }
+
+        function promptRemovePremise(index) {
+            const name = premises[index];
+            showConfirm("Padam Premis", `Adakah anda pasti mahu memadam premis "${name}"?`, function() {
+                premises.splice(index, 1);
+                renderPremises();
+                renderAssets();
+                showToast(`Premis "${name}" telah dipadam`, "info");
+            });
+        }
+
+        /* --- ASSET CRUD OPERATIONS --- */
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('editAssetId').value;
+            const premise = document.getElementById('assetPremise').value;
+            const prefix = document.getElementById('assetPrefixCode').value.trim().toUpperCase();
+            const name = document.getElementById('assetName').value.trim();
+            const category = document.getElementById('assetCategory').value;
+            const status = document.getElementById('assetStatus').value;
+            const notes = document.getElementById('assetNotes').value.trim();
+
+            if (!premise) {
+                showToast("Sila pilih premis PASTI", "warning");
+                return;
+            }
+
+            if (editId) {
+                // Update Asset
+                const index = assets.findIndex(a => a.id === editId);
+                if (index !== -1) {
+                    assets[index] = {
+                        ...assets[index],
+                        premise,
+                        name,
+                        category,
+                        status,
+                        notes,
+                        image: currentImageData || assets[index].image,
+                        updatedAt: new Date().toLocaleDateString('ms-MY')
+                    };
+                    showToast(`Aset ${assets[index].code} dikemaskini!`, "success");
+                }
+            } else {
+                // Create New Asset with Sequential Number
+                const countSamePremise = assets.filter(a => a.premise === premise).length + 1;
+                const formattedNum = String(countSamePremise).padStart(3, '0');
+                const generatedCode = `${prefix}-${formattedNum}`;
+
+                const newAsset = {
+                    id: Date.now().toString(),
+                    code: generatedCode,
+                    premise,
+                    name,
+                    category,
+                    status,
+                    notes,
+                    image: currentImageData,
+                    createdAt: new Date().toLocaleDateString('ms-MY')
+                };
+                assets.unshift(newAsset);
+                showToast(`Aset baru (${generatedCode}) berjaya didaftarkan!`, "success");
+            }
+
+            localStorage.setItem(STORAGE_ASSETS, JSON.stringify(assets));
+            resetForm();
+            renderAssets();
+            renderPremises();
+        }
+
+        function renderAssets() {
+            const listContainer = document.getElementById('assetList');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filterP = document.getElementById('filterPremise').value;
+            const filterS = document.getElementById('filterStatus').value;
+            const filterC = document.getElementById('filterCategory').value;
+
+            const filtered = assets.filter(a => {
+                const matchSearch = a.name.toLowerCase().includes(search) || 
+                                    a.code.toLowerCase().includes(search) || 
+                                    a.notes.toLowerCase().includes(search);
+                const matchPremise = filterP ? a.premise === filterP : true;
+                const matchStatus = filterS ? a.status === filterS : true;
+                const matchCategory = filterC ? a.category === filterC : true;
+                return matchSearch && matchPremise && matchStatus && matchCategory;
+            });
+
+            document.getElementById('assetCountBadge').innerText = `${filtered.length} Item`;
+            listContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                listContainer.innerHTML = `
+                    <div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-xl">
+                        <i class="fa-solid fa-box-open text-3xl text-slate-300 mb-2"></i>
+                        <p class="text-xs text-slate-500 font-medium">Tiada rekod aset ditemui.</p>
+                        <p class="text-[11px] text-slate-400">Cuba ubah penapis atau tambah pendaftaran aset baru.</p>
+                    </div>
+                `;
+                updateStats();
+                return;
+            }
+
+            filtered.forEach(item => {
+                let statusBadge = 'bg-emerald-100 text-emerald-800 border-emerald-300';
+                if (item.status === 'Rosak') statusBadge = 'bg-red-100 text-red-800 border-red-300';
+                if (item.status === 'Perlu Selenggara') statusBadge = 'bg-amber-100 text-amber-800 border-amber-300';
+
+                listContainer.innerHTML += `
+                    <div class="p-3.5 sm:p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between hover:border-emerald-400 transition shadow-xs">
+                        <div class="flex items-start gap-3 flex-1 min-w-0">
+                            <!-- Image Thumbnail -->
+                            ${item.image ? 
+                                `<img src="${item.image}" onclick="openImageModal('${item.image}', '${item.code} - ${item.name}')" 
+                                    class="w-14 h-14 sm:w-16 sm:h-16 object-cover rounded-lg border border-slate-300 flex-shrink-0 cursor-pointer hover:opacity-90">` : 
+                                `<div class="w-14 h-14 sm:w-16 sm:h-16 bg-slate-200 text-slate-400 flex items-center justify-center rounded-lg flex-shrink-0 text-xl border">
+                                    <i class="fa-solid fa-chair"></i>
+                                </div>`
+                            }
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-mono font-bold text-emerald-700 text-xs sm:text-sm">${item.code}</span>
+                                    <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-medium">${item.premise}</span>
+                                    <span class="text-[10px] bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full font-medium">${item.category}</span>
+                                </div>
+                                <h3 class="font-bold text-slate-800 text-sm mt-0.5 truncate">${item.name}</h3>
+                                ${item.notes ? `<p class="text-xs text-slate-600 mt-0.5 truncate italic">"${item.notes}"</p>` : ''}
+                                <p class="text-[10px] text-slate-400 mt-1">Daftar: ${item.createdAt}</p>
+                            </div>
+                        </div>
+
+                        <div class="flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 gap-2">
+                            <span class="text-[11px] px-2.5 py-0.5 rounded-full border font-semibold ${statusBadge}">${item.status}</span>
+                            <div class="flex items-center gap-1">
+                                <button onclick="openQRModal('${item.id}')" title="Lihat Tag Label QR" class="text-slate-600 hover:text-emerald-700 p-1.5 rounded bg-white border border-slate-200 shadow-xs text-xs">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </button>
+                                <button onclick="editAsset('${item.id}')" title="Kemas kini" class="text-slate-600 hover:text-indigo-600 p-1.5 rounded bg-white border border-slate-200 shadow-xs text-xs">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="promptDeleteAsset('${item.id}')" title="Hapus" class="text-slate-600 hover:text-red-600 p-1.5 rounded bg-white border border-slate-200 shadow-xs text-xs">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            updateStats();
+        }
+
+        function editAsset(id) {
+            const asset = assets.find(a => a.id === id);
+            if (!asset) return;
+
+            document.getElementById('editAssetId').value = asset.id;
+            document.getElementById('assetPremise').value = asset.premise;
+            document.getElementById('assetPrefixCode').value = asset.code.split('-')[0];
+            document.getElementById('assetName').value = asset.name;
+            document.getElementById('assetCategory').value = asset.category;
+            document.getElementById('assetStatus').value = asset.status;
+            document.getElementById('assetNotes').value = asset.notes;
+
+            if (asset.image) {
+                currentImageData = asset.image;
+                document.getElementById('imagePreview').src = asset.image;
+                document.getElementById('imagePreviewContainer').classList.remove('hidden');
+            } else {
+                clearImageSelection();
+            }
+
+            document.getElementById('formTitle').innerText = "Edit Maklumat Aset";
+            document.getElementById('formModeBadge').innerText = "Mod Edit";
+            document.getElementById('formModeBadge').className = "text-[10px] bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full";
+            document.getElementById('submitBtn').innerHTML = `<i class="fa-solid fa-check"></i> Kemas Kini Aset`;
+            document.getElementById('cancelEditBtn').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function promptDeleteAsset(id) {
+            const asset = assets.find(a => a.id === id);
+            if (!asset) return;
+
+            showConfirm("Hapus Aset", `Adakah anda pasti mahu memadam aset ${asset.code} (${asset.name})?`, function() {
+                assets = assets.filter(a => a.id !== id);
+                localStorage.setItem(STORAGE_ASSETS, JSON.stringify(assets));
+                renderAssets();
+                renderPremises();
+                showToast(`Aset ${asset.code} telah dipadam`, "info");
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('assetForm').reset();
+            document.getElementById('editAssetId').value = '';
+            clearImageSelection();
+            document.getElementById('formTitle').innerText = "2. Pendaftaran Aset Perabot";
+            document.getElementById('formModeBadge').innerText = "Baru";
+            document.getElementById('formModeBadge').className = "text-[10px] bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full";
+            document.getElementById('submitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Aset`;
+            document.getElementById('cancelEditBtn').classList.add('hidden');
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').innerText = assets.length;
+            document.getElementById('statBaik').innerText = assets.filter(a => a.status === 'Baik').length;
+            document.getElementById('statRosak').innerText = assets.filter(a => a.status === 'Rosak').length;
+            document.getElementById('statSelenggara').innerText = assets.filter(a => a.status === 'Perlu Selenggara').length;
+            document.getElementById('statPremise').innerText = premises.length;
+        }
+
+        /* --- QR CODE & TAG LABEL PRINTING --- */
+        function openQRModal(assetId) {
+            const asset = assets.find(a => a.id === assetId);
+            if (!asset) return;
+
+            document.getElementById('qrModalCode').innerText = asset.code;
+            document.getElementById('qrModalName').innerText = asset.name;
+            document.getElementById('qrModalPremise').innerText = `Premis: ${asset.premise} | Status: ${asset.status}`;
+
+            const qrContainer = document.getElementById('qrcode');
+            qrContainer.innerHTML = '';
+            new QRCode(qrContainer, {
+                text: JSON.stringify({ code: asset.code, name: asset.name, premise: asset.premise }),
+                width: 120,
+                height: 120
+            });
+
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function printLabels() {
+            if (assets.length === 0) {
+                showToast("Tiada aset untuk dicetak label", "warning");
+                return;
+            }
+
+            const grid = document.getElementById('printTagGrid');
+            grid.innerHTML = '';
+
+            assets.forEach(a => {
+                grid.innerHTML += `
+                    <div class="border-2 border-slate-800 p-3 rounded-lg flex flex-col items-center justify-center text-center">
+                        <p class="font-bold text-xs uppercase">PASTI Samarahan</p>
+                        <p class="font-mono font-bold text-sm text-emerald-800 my-1">${a.code}</p>
+                        <p class="font-semibold text-xs truncate max-w-full">${a.name}</p>
+                        <p class="text-[10px] text-slate-600">${a.premise}</p>
+                    </div>
+                `;
+            });
+
+            window.print();
+        }
+
+        /* --- EXPORT CSV & JSON BACKUP --- */
+        function exportToCSV() {
+            if (assets.length === 0) {
+                showToast("Tiada data aset untuk dieksport", "warning");
+                return;
+            }
+
+            let csv = "Kod Aset,Premis,Nama Perabot,Kategori,Status,Catatan,Tarikh Daftar\n";
+            assets.forEach(a => {
+                csv += `"${a.code}","${a.premise}","${a.name}","${a.category}","${a.status}","${a.notes || ''}","${a.createdAt}"\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Inventori_PASTI_Samarahan_${new Date().toISOString().slice(0,10)}.csv`;
+            link.click();
+            showToast("Fail CSV berjaya dimuat turun!", "success");
+        }
+
+        function exportBackupJSON() {
+            const data = { premises, assets, exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `Backup_PASTI_Samarahan_${new Date().toISOString().slice(0,10)}.json`;
+            link.click();
+            showToast("Sandaran JSON berjaya dimuat turun", "success");
+        }
+
+        function importBackupJSON() {
+            const input = document.getElementById('importJsonInput');
+            const file = input.files[0];
+            if (!file) {
+                showToast("Sila pilih fail .json dahulu", "warning");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.premises && data.assets) {
+                        premises = data.premises;
+                        assets = data.assets;
+                        localStorage.setItem(STORAGE_PREMISES, JSON.stringify(premises));
+                        localStorage.setItem(STORAGE_ASSETS, JSON.stringify(assets));
+                        renderPremises();
+                        renderAssets();
+                        closeBackupModal();
+                        showToast("Data berjaya dipulihkan!", "success");
+                    } else {
+                        showToast("Format fail JSON tidak sah", "error");
+                    }
+                } catch(err) {
+                    showToast("Ralat membaca fail JSON", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        /* --- MODAL CONTROLLERS & TOASTS --- */
+        function openDriveModal() { document.getElementById('driveModal').classList.remove('hidden'); }
+        function closeDriveModal() { document.getElementById('driveModal').classList.add('hidden'); }
+        function openBackupModal() { document.getElementById('backupModal').classList.remove('hidden'); }
+        function closeBackupModal() { document.getElementById('backupModal').classList.add('hidden'); }
+
+        function openImageModal(src, caption) {
+            document.getElementById('imageModalTarget').src = src;
+            document.getElementById('imageModalCaption').innerText = caption;
+            document.getElementById('imageModal').classList.remove('hidden');
+        }
+        function closeImageModal() { document.getElementById('imageModal').classList.add('hidden'); }
+
+        function showConfirm(title, message, callback) {
+            document.getElementById('confirmTitle').innerText = title;
+            document.getElementById('confirmMessage').innerText = message;
+            pendingConfirmCallback = callback;
+            document.getElementById('confirmModal').classList.remove('hidden');
+        }
+
+        function closeConfirmModal() {
+            document.getElementById('confirmModal').classList.add('hidden');
+            pendingConfirmCallback = null;
+        }
+
+        document.getElementById('confirmYesBtn').onclick = function() {
+            if (pendingConfirmCallback) pendingConfirmCallback();
+            closeConfirmModal();
+        };
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            let bg = 'bg-slate-800 text-white';
+            if (type === 'success') bg = 'bg-emerald-600 text-white';
+            if (type === 'warning') bg = 'bg-amber-600 text-white';
+            if (type === 'error') bg = 'bg-red-600 text-white';
+
+            const toast = document.createElement('div');
+            toast.className = `${bg} px-4 py-2.5 rounded-xl shadow-lg text-xs font-medium transition duration-300 pointer-events-auto flex items-center gap-2`;
+            toast.innerHTML = `<span>${message}</span>`;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
